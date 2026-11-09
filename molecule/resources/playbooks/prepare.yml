@@ -1,0 +1,25 @@
+---
+# role: cockpit
+# file: molecule/resources/playbooks/prepare.yml
+
+- name: COCKPIT | Prepare package metadata and Debian upgrade fixture
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: COCKPIT | Install Debian stable packages before testing backports migration
+      become: true
+      become_user: root
+      ansible.builtin.apt:
+        name: [cockpit-ws, cockpit-system]
+        default_release: "{{ ansible_facts.distribution_release }}"
+        install_recommends: false
+        update_cache: true
+        state: present
+      when: ansible_facts.distribution == 'Debian'
+
+    - name: COCKPIT | Refresh DNF package metadata
+      become: true
+      become_user: root
+      ansible.builtin.dnf:
+        update_cache: true
+      when: ansible_facts.os_family == 'RedHat'

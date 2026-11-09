@@ -1,0 +1,11 @@
+---
+# role: cockpit
+# file: handlers/main.yml
+
+- name: COCKPIT | Restart the web service
+  become: true
+  become_user: root
+  ansible.builtin.systemd_service:
+    name: cockpit.service
+    state: restarted
+  listen: restart cockpit

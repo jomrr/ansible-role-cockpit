@@ -1,0 +1,9 @@
+# Managed by ansible.
+# file: {{ template_destpath }}
+{% for section, options in cockpit_config | dictsort %}
+
+[{{ section }}]
+{% for option, value in options | dictsort %}
+{{ option }} = {{ (value | lower) if value is boolean else value }}
+{% endfor %}
+{% endfor %}

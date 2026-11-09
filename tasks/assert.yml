@@ -1,0 +1,23 @@
+---
+# role: cockpit
+# file: tasks/assert.yml
+
+- name: COCKPIT | Validate supported platforms and web service package
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.distribution in ['AlmaLinux', 'Debian', 'Fedora']
+      - "'cockpit-ws' in cockpit_packages"
+    fail_msg: Cockpit requires AlmaLinux, Debian or Fedora and cockpit-ws in cockpit_packages.
+    quiet: true
+
+- name: COCKPIT | Validate configuration sections
+  ansible.builtin.assert:
+    that:
+      - __cockpit_section.key is match('^[A-Za-z][A-Za-z0-9_-]*$')
+      - __cockpit_section.value is mapping
+    fail_msg: Cockpit configuration requires named sections containing option mappings.
+    quiet: true
+  loop: "{{ cockpit_config | dict2items }}"
+  loop_control:
+    loop_var: __cockpit_section
+    label: "{{ __cockpit_section.key }}"

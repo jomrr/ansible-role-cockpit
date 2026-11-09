@@ -1,0 +1,258 @@
+# Ansible Role: cockpit
+
+![GitHub](https://img.shields.io/github/license/jomrr/ansible-role-cockpit)
+![GitHub last commit](https://img.shields.io/github/last-commit/jomrr/ansible-role-cockpit)
+![GitHub issues](https://img.shields.io/github/issues-raw/jomrr/ansible-role-cockpit)
+[![dev](https://img.shields.io/github/actions/workflow/status/jomrr/ansible-role-cockpit/dev.yml?branch=dev&label=dev)](https://github.com/jomrr/ansible-role-cockpit/actions/workflows/dev.yml?query=branch%3Adev)
+[![main](https://img.shields.io/github/actions/workflow/status/jomrr/ansible-role-cockpit/main.yml?branch=main&label=main)](https://github.com/jomrr/ansible-role-cockpit/actions/workflows/main.yml?query=branch%3Amain)
+
+Install Cockpit for system administration, journal filtering and service
+management.
+
+## Purpose
+
+Install cockpit-ws and cockpit-system for browser-based journal filtering and
+systemd service management. Select additional applications with
+cockpit_packages. AlmaLinux and Fedora use their distribution repositories;
+Debian uses its codename-specific backports suite. Access the service at
+`https://host.example.com:9090`.
+
+## Scope
+
+### Managed
+
+- Selected packages and their required dependencies, without APT recommendations
+  or DNF weak dependencies.
+- Debian backports repository and package selection during installation and
+  updates.
+- Authoritative /etc/cockpit/cockpit.conf and enabled, running cockpit.socket.
+
+### Not Managed
+
+- AD domain membership, SSSD, Kerberos keytabs, browser policies and account
+  privileges.
+- Firewall rules, TLS certificate provisioning, custom socket listeners and
+  their SELinux port labels.
+- Removal of previously installed Cockpit applications or the distribution's
+  cockpit metapackage.
+
+## Requirements
+
+- Debian requires an available backports suite for its release and the
+  distribution's debian-archive-keyring package.
+- Journal visibility and service administration depend on the logged-in
+  account's journal, sudo or polkit permissions.
+
+## Dependencies
+
+```yaml
+collections:
+  - name: containers.podman
+    version: '>=1.18.0'
+```
+
+## Role Variables
+
+### `cockpit_packages`
+
+Type: `list`. Required: `false`.
+
+Complete list of packages to install; cockpit-ws is required for the managed web
+service.
+Required dependencies are installed, recommendations are disabled and previously
+installed applications are not removed.
+
+Default:
+
+```yaml
+cockpit_packages:
+  - cockpit-ws
+  - cockpit-system
+```
+
+### `cockpit_package_state`
+
+Type: `str`. Required: `false`.
+
+Package installation policy; latest also upgrades Debian stable installations to
+the backports candidate.
+Present retains already installed versions, even when a newer backports version
+is available.
+
+Default:
+
+```yaml
+cockpit_package_state: latest
+```
+
+### `cockpit_debian_backports_uri`
+
+Type: `str`. Required: `false`.
+
+Debian mirror supplying the distribution codename's backports suite, verified
+with the Debian archive keyring.
+
+Default:
+
+```yaml
+cockpit_debian_backports_uri: https://deb.debian.org/debian
+```
+
+### `cockpit_config`
+
+Type: `dict`. Required: `false`.
+
+Authoritative cockpit.conf sections mapping option names to string, boolean or
+numeric values.
+Empty uses upstream defaults; booleans render as lowercase true or false, and
+multi-value options use space-separated strings.
+Options must be supported by the installed Cockpit version; credentials do not
+belong in this configuration.
+
+Default:
+
+```yaml
+cockpit_config: {}
+```
+
+## Managed Files
+
+- `/etc/cockpit/cockpit.conf`
+- `/etc/apt/sources.list.d/cockpit-backports.sources`
+
+## Check Mode
+
+Check mode predicts changes on configured hosts without applying them.
+
+- On a fresh host, missing packages, repository metadata or systemd units can
+  prevent a complete check-mode run.
+
+## Service Behavior
+
+Enable and start cockpit.socket. Restart cockpit.service after package or
+configuration changes and apply handlers before returning. Unchanged runs do not
+restart the service; package updates available with cockpit_package_state=latest
+are intentional changes.
+
+### Handlers
+
+- Package and cockpit.conf updates restart the web service and can interrupt
+  active sessions.
+
+## Security Notes
+
+- HTTPS uses Cockpit's certificate selection in /etc/cockpit/ws-certs.d.
+  Provision a matching .cert and .key pair there with restricted key
+  permissions; Cockpit creates a self-signed certificate when none is supplied.
+  The alphabetically last certificate takes precedence.
+- Set WebService.LoginTo=false when direct login to other hosts is unnecessary.
+  Only enable AllowMultiHost for mutually trusted hosts. Keep AllowUnencrypted
+  disabled unless the deployment explicitly requires it.
+- ProtocolHeader and ForwardedForHeader are intended for a trusted reverse proxy
+  that replaces incoming forwarding headers. Set Origins to the externally used
+  HTTPS origin.
+
+## Operational Notes
+
+- AD SSO uses Cockpit's default Kerberos negotiation without an enable switch.
+  The host must already be joined to AD, have working domain DNS and a matching
+  FQDN, and resolve domain users to Unix accounts. The keytab must contain
+  HOST/server.example.com@EXAMPLE.COM; Cockpit uses /etc/krb5.keytab or a
+  dedicated /etc/cockpit/krb5.keytab.
+- The browser needs a valid Kerberos ticket and permission to negotiate for the
+  server's FQDN. Delegating credentials to further hosts requires additional
+  domain and browser settings. SSO grants authentication, not administrative
+  privileges. Session.IdleTimeout applies to password logins and does not
+  provide a Kerberos logout boundary.
+- cockpit_config accepts the installed version's cockpit.conf options.
+  WebService includes Origins, ProtocolHeader, ForwardedForHeader, LoginTitle,
+  LoginTo, RequireHost, AllowMultiHost, MaxStartups, MaxConcurrentConnections,
+  AllowUnencrypted, UrlRoot, ClientCertAuthentication, Shell and
+  CustomLoginPage. Session includes Banner, IdleTimeout and
+  WarnBeforeConnecting. Log.Fatal and OAuth.URL, ErrorParam and TokenParam are
+  also documented upstream. Newer options may be unavailable in distribution
+  versions.
+- OAuth settings alone do not implement AD SSO or token validation.
+  Client-certificate authentication also needs its own identity infrastructure.
+  Setting negotiate.action=none disables Kerberos; setting basic.action=none
+  disables password login. Leave both unset to retain the standard
+  authentication methods.
+- Port and bind address belong in a cockpit.socket systemd drop-in, not
+  cockpit.conf. Reset ListenStream before adding listeners, then reload systemd
+  and restart the socket. Arrange firewall access and SELinux websm_port_t
+  labels for nonstandard ports separately.
+- The package list replaces the defaults, so retain cockpit-ws and normally
+  cockpit-system. Optional applications include cockpit-storaged,
+  cockpit-networkmanager, cockpit-packagekit, cockpit-podman and
+  cockpit-machines where available in the selected distribution. Package
+  availability is distribution-specific; required dependencies such as
+  cockpit-bridge are installed automatically. No cockpit metapackage is
+  requested by default.
+- An empty cockpit_config clears role-managed options and uses upstream
+  defaults. Cockpit provides no standalone cockpit.conf validation command;
+  confirm version-specific settings against the deployment guide and the running
+  service.
+
+## Supported Platforms
+
+| OS Family | Distribution | Version | Container Image |
+| --------- | ------------ | ------- | --------------- |
+| RedHat | AlmaLinux | latest | [jomrr/molecule-almalinux:latest](https://hub.docker.com/r/jomrr/molecule-almalinux) |
+| Debian | Debian | latest | [jomrr/molecule-debian:latest](https://hub.docker.com/r/jomrr/molecule-debian) |
+| RedHat | Fedora | latest | [jomrr/molecule-fedora:latest](https://hub.docker.com/r/jomrr/molecule-fedora) |
+
+## Example Playbook
+
+### Minimal system console with AD SSO
+
+Apply to hosts whose AD membership and account privileges are already configured.
+
+```yaml
+- name: Install Cockpit
+  hosts: all
+  gather_facts: true
+  roles:
+    - role: jomrr.cockpit
+```
+
+### Select applications and login options
+
+Add storage management, single-host login and an idle timeout.
+
+```yaml
+- name: Configure Cockpit
+  hosts: all
+  gather_facts: true
+  roles:
+    - role: jomrr.cockpit
+      cockpit_packages:
+        - cockpit-ws
+        - cockpit-system
+        - cockpit-storaged
+      cockpit_config:
+        WebService:
+          LoginTo: false
+          LoginTitle: Server administration
+        Session:
+          IdleTimeout: 15
+```
+
+## References
+
+- [Deployment guide](https://docs.cockpit-project.org/cockpit-guide/latest/guide/index.html)
+- [Installation](https://cockpit-project.org/running.html)
+- [Configuration options](https://docs.cockpit-project.org/cockpit-guide/latest/man/cockpit.conf.5.html)
+- [Kerberos SSO](https://docs.cockpit-project.org/cockpit-guide/latest/guide/sso.html)
+- [TLS certificates](https://docs.cockpit-project.org/cockpit-guide/latest/guide/https.html)
+- [Port and address](https://docs.cockpit-project.org/cockpit-guide/latest/guide/listen.html)
+
+## Author
+
+[Jonas Mauer](https://github.com/jomrr)
+
+## License
+
+This project is licensed under the MIT License.
+See [LICENSE](LICENSE) for the full license text.
+
+Copyright (c) 2026 Jonas Mauer.

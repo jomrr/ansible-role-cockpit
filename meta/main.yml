@@ -1,0 +1,17 @@
+---
+# role: cockpit
+# file: meta/main.yml
+
+galaxy_info:
+  author: Jonas Mauer
+  description: Install Cockpit for system administration, journal filtering and service management.
+  galaxy_tags:
+    - cockpit
+    - system
+    - administration
+    - monitoring
+  issue_tracker_url: https://github.com/jomrr/ansible-role-cockpit/issues
+  license: MIT
+  min_ansible_version: "2.22"
+  namespace: jomrr
+  role_name: cockpit

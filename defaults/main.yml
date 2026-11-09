@@ -1,0 +1,24 @@
+---
+# role: cockpit
+# file: defaults/main.yml
+
+# Packages installed for the web service and selected Cockpit applications.
+cockpit_packages:
+  - cockpit-ws
+  - cockpit-system
+# cockpit_packages: [cockpit-ws, cockpit-system, cockpit-storaged]
+
+# Installation policy for the selected packages, including Debian backports upgrades.
+# Choices: present, latest
+cockpit_package_state: latest
+
+# Debian mirror providing the distribution's backports suite.
+cockpit_debian_backports_uri: https://deb.debian.org/debian
+
+# Cockpit configuration sections and scalar options; empty retains upstream defaults.
+cockpit_config: {}
+# cockpit_config:
+#   WebService:
+#     LoginTo: false
+#   Session:
+#     IdleTimeout: 15

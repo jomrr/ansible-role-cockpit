@@ -1,0 +1,58 @@
+---
+# role: cockpit
+# file: molecule/resources/playbooks/side_effect.yml
+
+- name: COCKPIT | Exercise application selection, configuration updates and service recovery
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: COCKPIT | Add an application and customize the login page
+      ansible.builtin.include_role:
+        name: "{{ lookup('ansible.builtin.env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+      vars:
+        cockpit_packages: [cockpit-ws, cockpit-system, cockpit-storaged]
+        cockpit_config:
+          WebService:
+            LoginTitle: Molecule Cockpit
+            LoginTo: false
+          Session:
+            IdleTimeout: 15
+
+    - name: COCKPIT | Query the updated login page
+      ansible.builtin.uri:
+        url: https://localhost:9090/
+        validate_certs: false
+        return_content: true
+      register: __cockpit_updated_login
+      until: __cockpit_updated_login.status == 200
+      retries: 10
+      delay: 2
+
+    - name: COCKPIT | Verify the running service uses the new configuration
+      ansible.builtin.assert:
+        that: "'Molecule Cockpit' in __cockpit_updated_login.content"
+        quiet: true
+
+    - name: COCKPIT | Query selected applications
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: COCKPIT | Verify the additional application is installed
+      ansible.builtin.assert:
+        that: "'cockpit-storaged' in ansible_facts.packages"
+        quiet: true
+
+    - name: COCKPIT | Stop the web service
+      become: true
+      become_user: root
+      ansible.builtin.systemd_service:
+        name: cockpit.service
+        state: stopped
+
+    - name: COCKPIT | Stop and disable socket activation
+      become: true
+      become_user: root
+      ansible.builtin.systemd_service:
+        name: cockpit.socket
+        enabled: false
+        state: stopped

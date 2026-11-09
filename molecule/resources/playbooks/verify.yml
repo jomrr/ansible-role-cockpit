@@ -1,0 +1,67 @@
+---
+# role: cockpit
+# file: molecule/resources/playbooks/verify.yml
+
+- name: COCKPIT | Verify the system console
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: COCKPIT | Verify socket activation is enabled and running
+      become: true
+      become_user: root
+      ansible.builtin.systemd_service:
+        name: cockpit.socket
+        enabled: true
+        state: started
+      check_mode: true
+      register: __cockpit_socket
+      failed_when: __cockpit_socket is changed or __cockpit_socket is failed
+
+    - name: COCKPIT | Query installed packages
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: COCKPIT | Verify the minimal applications and required bridge
+      ansible.builtin.assert:
+        that:
+          - "'cockpit-ws' in ansible_facts.packages"
+          - "'cockpit-system' in ansible_facts.packages"
+          - "'cockpit-bridge' in ansible_facts.packages"
+          - "'cockpit' not in ansible_facts.packages"
+          - "'cockpit-packagekit' not in ansible_facts.packages"
+        quiet: true
+
+    - name: COCKPIT | Verify Debian packages were upgraded to backports
+      ansible.builtin.assert:
+        that:
+          - "'bpo' in ansible_facts.packages['cockpit-ws'][0].version"
+          - "'bpo' in ansible_facts.packages['cockpit-system'][0].version"
+        quiet: true
+      when: ansible_facts.distribution == 'Debian'
+
+    - name: COCKPIT | Query the HTTPS health endpoint
+      ansible.builtin.uri:
+        url: https://localhost:9090/ping
+        validate_certs: false
+        return_content: true
+      register: __cockpit_ping
+      until: __cockpit_ping.status == 200
+      retries: 10
+      delay: 2
+
+    - name: COCKPIT | Verify the health response
+      ansible.builtin.assert:
+        that: __cockpit_ping.json.service == 'cockpit'
+        quiet: true
+
+    - name: COCKPIT | Query the default login page
+      ansible.builtin.uri:
+        url: https://localhost:9090/
+        validate_certs: false
+        return_content: true
+      register: __cockpit_login
+
+    - name: COCKPIT | Verify custom login configuration was cleared
+      ansible.builtin.assert:
+        that: "'Molecule Cockpit' not in __cockpit_login.content"
+        quiet: true

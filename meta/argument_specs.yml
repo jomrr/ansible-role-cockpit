@@ -1,0 +1,46 @@
+---
+# role: cockpit
+# file: meta/argument_specs.yml
+
+argument_specs:
+  main:
+    short_description: Install selected Cockpit applications, configure the web service
+      and enable socket activation.
+    options:
+      cockpit_packages:
+        type: list
+        elements: str
+        default:
+          - cockpit-ws
+          - cockpit-system
+        description:
+          - Complete list of packages to install; cockpit-ws is required for the managed
+            web service.
+          - Required dependencies are installed, recommendations are disabled and previously
+            installed applications are not removed.
+      cockpit_package_state:
+        type: str
+        default: latest
+        choices:
+          - present
+          - latest
+        description:
+          - Package installation policy; latest also upgrades Debian stable installations
+            to the backports candidate.
+          - Present retains already installed versions, even when a newer backports version
+            is available.
+      cockpit_debian_backports_uri:
+        type: str
+        default: https://deb.debian.org/debian
+        description: Debian mirror supplying the distribution codename's backports suite,
+          verified with the Debian archive keyring.
+      cockpit_config:
+        type: dict
+        default: {}
+        description:
+          - Authoritative cockpit.conf sections mapping option names to string, boolean
+            or numeric values.
+          - Empty uses upstream defaults; booleans render as lowercase true or false, and
+            multi-value options use space-separated strings.
+          - Options must be supported by the installed Cockpit version; credentials do not
+            belong in this configuration.
