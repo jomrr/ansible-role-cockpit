@@ -80,3 +80,30 @@ platforms:
       - "SYS_ADMIN"
     security_opts:
       - "label=disable"
+  - name: "opensuse-leap-latest-cockpit"
+    image: "docker.io/jomrr/molecule-opensuse-leap:latest"
+    pre_build_image: true
+    override_command: false
+    systemd: "true"
+    capabilities:
+      - "SYS_ADMIN"
+    security_opts:
+      - "label=disable"
+  - name: "opensuse-tumbleweed-latest-cockpit"
+    image: "docker.io/jomrr/molecule-opensuse-tumbleweed:latest"
+    pre_build_image: true
+    override_command: false
+    systemd: "true"
+    capabilities:
+      - "SYS_ADMIN"
+    security_opts:
+      - "label=disable"
+  - name: "ubuntu-latest-cockpit"
+    image: "docker.io/jomrr/molecule-ubuntu:latest"
+    pre_build_image: true
+    override_command: false
+    systemd: "true"
+    capabilities:
+      - "SYS_ADMIN"
+    security_opts:
+      - "label=disable"

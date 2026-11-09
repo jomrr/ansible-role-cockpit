@@ -8,7 +8,7 @@ cockpit_packages:
   - cockpit-system
 # cockpit_packages: [cockpit-ws, cockpit-system, cockpit-storaged]
 
-# Installation policy for the selected packages, including Debian backports upgrades.
+# Installation policy for the selected packages, including APT backports upgrades.
 # Choices: present, latest
 cockpit_package_state: latest
 

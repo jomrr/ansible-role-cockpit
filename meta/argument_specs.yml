@@ -25,8 +25,8 @@ argument_specs:
           - present
           - latest
         description:
-          - Package installation policy; latest also upgrades Debian stable installations
-            to the backports candidate.
+          - Package installation policy; latest also upgrades installed APT packages to
+            the selected backports candidate when available.
           - Present retains already installed versions, even when a newer backports version
             is available.
       cockpit_debian_backports_uri:

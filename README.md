@@ -13,18 +13,19 @@ management.
 
 Install cockpit-ws and cockpit-system for browser-based journal filtering and
 systemd service management. Select additional applications with
-cockpit_packages. AlmaLinux and Fedora use their distribution repositories;
-Debian uses its codename-specific backports suite. Access the service at
+cockpit_packages. AlmaLinux, Fedora, openSUSE Leap and openSUSE Tumbleweed use
+their distribution repositories. Debian and Ubuntu select packages with their
+codename-specific backports suite enabled. Access the service at
 `https://host.example.com:9090`.
 
 ## Scope
 
 ### Managed
 
-- Selected packages and their required dependencies, without APT recommendations
-  or DNF weak dependencies.
-- Debian backports repository and package selection during installation and
-  updates.
+- Selected packages and their required dependencies, without APT or Zypper
+  recommendations or DNF weak dependencies.
+- Debian backports repository and APT backports package selection during
+  installation and updates.
 - Authoritative /etc/cockpit/cockpit.conf and enabled, running cockpit.socket.
 
 ### Not Managed
@@ -40,6 +41,11 @@ Debian uses its codename-specific backports suite. Access the service at
 
 - Debian requires an available backports suite for its release and the
   distribution's debian-archive-keyring package.
+- Ubuntu requires its release's backports suite and universe component enabled
+  in the distribution repositories. The role uses those sources without adding
+  Debian repositories.
+- The Zypper package backend on openSUSE requires the community.general
+  collection.
 - Journal visibility and service administration depend on the logged-in
   account's journal, sudo or polkit permissions.
 
@@ -47,6 +53,8 @@ Debian uses its codename-specific backports suite. Access the service at
 
 ```yaml
 collections:
+  - name: community.general
+    version: '>=12.0.0'
   - name: containers.podman
     version: '>=1.18.0'
 ```
@@ -74,8 +82,8 @@ cockpit_packages:
 
 Type: `str`. Required: `false`.
 
-Package installation policy; latest also upgrades Debian stable installations to
-the backports candidate.
+Package installation policy; latest also upgrades installed APT packages to the
+selected backports candidate when available.
 Present retains already installed versions, even when a newer backports version
 is available.
 
@@ -222,6 +230,9 @@ are intentional changes.
 | RedHat | AlmaLinux | latest | [jomrr/molecule-almalinux:latest](https://hub.docker.com/r/jomrr/molecule-almalinux) |
 | Debian | Debian | latest | [jomrr/molecule-debian:latest](https://hub.docker.com/r/jomrr/molecule-debian) |
 | RedHat | Fedora | latest | [jomrr/molecule-fedora:latest](https://hub.docker.com/r/jomrr/molecule-fedora) |
+| Suse | OpenSuse Leap | latest | [jomrr/molecule-opensuse-leap:latest](https://hub.docker.com/r/jomrr/molecule-opensuse-leap) |
+| Suse | OpenSuse Tumbleweed | latest | [jomrr/molecule-opensuse-tumbleweed:latest](https://hub.docker.com/r/jomrr/molecule-opensuse-tumbleweed) |
+| Debian | Ubuntu | latest | [jomrr/molecule-ubuntu:latest](https://hub.docker.com/r/jomrr/molecule-ubuntu) |
 
 ## Example Playbook
 

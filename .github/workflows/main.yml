@@ -97,6 +97,18 @@ jobs:
             uns: jomrr
             img: fedora
             tag: latest
+          - name: cockpit-opensuse-leap-latest
+            uns: jomrr
+            img: opensuse-leap
+            tag: latest
+          - name: cockpit-opensuse-tumbleweed-latest
+            uns: jomrr
+            img: opensuse-tumbleweed
+            tag: latest
+          - name: cockpit-ubuntu-latest
+            uns: jomrr
+            img: ubuntu
+            tag: latest
 
     steps:
       - name: Disable AppArmor profile(s) for Molecule

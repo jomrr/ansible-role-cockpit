@@ -5,9 +5,9 @@
 - name: COCKPIT | Validate supported platforms and web service package
   ansible.builtin.assert:
     that:
-      - ansible_facts.distribution in ['AlmaLinux', 'Debian', 'Fedora']
+      - ansible_facts.os_family in ['Debian', 'RedHat', 'Suse']
       - "'cockpit-ws' in cockpit_packages"
-    fail_msg: Cockpit requires AlmaLinux, Debian or Fedora and cockpit-ws in cockpit_packages.
+    fail_msg: Cockpit requires a Debian, RedHat or Suse OS family and cockpit-ws in cockpit_packages.
     quiet: true
 
 - name: COCKPIT | Validate configuration sections

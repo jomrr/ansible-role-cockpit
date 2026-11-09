@@ -22,15 +22,15 @@
   register: __cockpit_backports
   when: ansible_facts.distribution == 'Debian'
 
-- name: COCKPIT | Refresh Debian package metadata
+- name: COCKPIT | Refresh APT package metadata
   become: true
   become_user: root
   ansible.builtin.apt:
     update_cache: true
     cache_valid_time: "{{ (__cockpit_backports is changed) | ternary(0, 3600) }}"
-  when: ansible_facts.distribution == 'Debian'
+  when: ansible_facts.os_family == 'Debian'
 
-- name: COCKPIT | Install packages from Debian backports
+- name: COCKPIT | Install packages with APT backports enabled
   become: true
   become_user: root
   ansible.builtin.apt:
@@ -38,10 +38,10 @@
     state: "{{ cockpit_package_state }}"
     default_release: "{{ ansible_facts.distribution_release }}-backports"
     install_recommends: false
-  when: ansible_facts.distribution == 'Debian'
+  when: ansible_facts.os_family == 'Debian'
   notify: restart cockpit
 
-- name: COCKPIT | Install packages from distribution repositories
+- name: COCKPIT | Install packages with DNF
   become: true
   become_user: root
   ansible.builtin.dnf:
@@ -49,6 +49,17 @@
     state: "{{ cockpit_package_state }}"
     install_weak_deps: false
   when: ansible_facts.os_family == 'RedHat'
+  notify: restart cockpit
+
+- name: COCKPIT | Install packages with Zypper
+  become: true
+  become_user: root
+  community.general.zypper:
+    name: "{{ cockpit_packages }}"
+    state: "{{ cockpit_package_state }}"
+    disable_recommends: true
+    update_cache: true
+  when: ansible_facts.os_family == 'Suse'
   notify: restart cockpit
 
 - name: COCKPIT | Create configuration directory
