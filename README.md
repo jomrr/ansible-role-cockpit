@@ -104,6 +104,10 @@ Type: `dict`. Required: `false`.
 
 Authoritative cockpit.conf sections mapping option names to string, boolean or
 numeric values.
+Defaults disable remote-host login, multi-host sessions and unencrypted access,
+with at most ten concurrent login attempts.
+Password sessions expire after fifteen idle minutes; Kerberos SSO is unaffected.
+Remote-connection warnings remain enabled.
 Empty uses upstream defaults; booleans render as lowercase true or false, and
 multi-value options use space-separated strings.
 Options must be supported by the installed Cockpit version; credentials do not
@@ -112,7 +116,15 @@ belong in this configuration.
 Default:
 
 ```yaml
-cockpit_config: {}
+cockpit_config:
+  WebService:
+    LoginTo: false
+    AllowMultiHost: false
+    AllowUnencrypted: false
+    MaxStartups: 10
+  Session:
+    IdleTimeout: 15
+    WarnBeforeConnecting: true
 ```
 
 ## Managed Files
@@ -145,9 +157,14 @@ are intentional changes.
   Provision a matching .cert and .key pair there with restricted key
   permissions; Cockpit creates a self-signed certificate when none is supplied.
   The alphabetically last certificate takes precedence.
-- Set WebService.LoginTo=false when direct login to other hosts is unnecessary.
-  Only enable AllowMultiHost for mutually trusted hosts. Keep AllowUnencrypted
-  disabled unless the deployment explicitly requires it.
+- Defaults disable direct login to other hosts (LoginTo), multi-host sessions
+  (AllowMultiHost) and unencrypted access (AllowUnencrypted). Cockpit retains
+  its HTTP exceptions for localhost and /ping. Only enable multi-host sessions
+  for mutually trusted hosts.
+- MaxStartups=10 limits concurrent login attempts. Session.IdleTimeout=15
+  expires inactive password sessions after fifteen minutes; it does not enforce
+  logout for Kerberos SSO. WarnBeforeConnecting=true retains remote-connection
+  warnings if remote access is enabled.
 - ProtocolHeader and ForwardedForHeader are intended for a trusted reverse proxy
   that replaces incoming forwarding headers. Set Origins to the externally used
   HTTPS origin.
@@ -188,10 +205,15 @@ are intentional changes.
   availability is distribution-specific; required dependencies such as
   cockpit-bridge are installed automatically. No cockpit metapackage is
   requested by default.
-- An empty cockpit_config clears role-managed options and uses upstream
-  defaults. Cockpit provides no standalone cockpit.conf validation command;
-  confirm version-specific settings against the deployment guide and the running
-  service.
+- With Ansible's standard dictionary replacement, overriding cockpit_config
+  replaces the complete mapping. Include all desired settings when customizing
+  it, as shown below. An empty cockpit_config clears role-managed options and
+  uses upstream defaults. Cockpit provides no standalone cockpit.conf validation
+  command; confirm version-specific settings against the deployment guide and
+  the running service.
+- MaxConcurrentConnections remains at the installed version's default. Origins,
+  proxy headers, OAuth and client-certificate authentication remain unset and
+  require deployment-specific choices.
 
 ## Supported Platforms
 
@@ -217,7 +239,7 @@ Apply to hosts whose AD membership and account privileges are already configured
 
 ### Select applications and login options
 
-Add storage management, single-host login and an idle timeout.
+Add storage management and a login title while retaining the defaults.
 
 ```yaml
 - name: Configure Cockpit
@@ -232,9 +254,13 @@ Add storage management, single-host login and an idle timeout.
       cockpit_config:
         WebService:
           LoginTo: false
+          AllowMultiHost: false
+          AllowUnencrypted: false
+          MaxStartups: 10
           LoginTitle: Server administration
         Session:
           IdleTimeout: 15
+          WarnBeforeConnecting: true
 ```
 
 ## References

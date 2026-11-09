@@ -15,10 +15,14 @@ cockpit_package_state: latest
 # Debian mirror providing the distribution's backports suite.
 cockpit_debian_backports_uri: https://deb.debian.org/debian
 
-# Cockpit configuration sections and scalar options; empty retains upstream defaults.
-cockpit_config: {}
-# cockpit_config:
-#   WebService:
-#     LoginTo: false
-#   Session:
-#     IdleTimeout: 15
+# Cockpit configuration for local HTTPS access and a fifteen-minute password idle timeout.
+cockpit_config:
+  WebService:
+    LoginTo: false
+    AllowMultiHost: false
+    AllowUnencrypted: false
+    MaxStartups: 10
+  Session:
+    IdleTimeout: 15
+    WarnBeforeConnecting: true
+# cockpit_config: {}

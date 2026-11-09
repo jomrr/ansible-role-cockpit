@@ -15,8 +15,12 @@
           WebService:
             LoginTitle: Molecule Cockpit
             LoginTo: false
+            AllowMultiHost: false
+            AllowUnencrypted: false
+            MaxStartups: 10
           Session:
-            IdleTimeout: 15
+            IdleTimeout: 5
+            WarnBeforeConnecting: true
 
     - name: COCKPIT | Query the updated login page
       ansible.builtin.uri:

@@ -36,10 +36,22 @@ argument_specs:
           verified with the Debian archive keyring.
       cockpit_config:
         type: dict
-        default: {}
+        default:
+          WebService:
+            LoginTo: false
+            AllowMultiHost: false
+            AllowUnencrypted: false
+            MaxStartups: 10
+          Session:
+            IdleTimeout: 15
+            WarnBeforeConnecting: true
         description:
           - Authoritative cockpit.conf sections mapping option names to string, boolean
             or numeric values.
+          - Defaults disable remote-host login, multi-host sessions and unencrypted access,
+            with at most ten concurrent login attempts.
+          - Password sessions expire after fifteen idle minutes; Kerberos SSO is unaffected.
+            Remote-connection warnings remain enabled.
           - Empty uses upstream defaults; booleans render as lowercase true or false, and
             multi-value options use space-separated strings.
           - Options must be supported by the installed Cockpit version; credentials do not
