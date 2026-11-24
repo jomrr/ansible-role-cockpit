@@ -106,12 +106,27 @@ Default:
 cockpit_debian_backports_uri: https://deb.debian.org/debian
 ```
 
+### `cockpit_backup`
+
+Type: `bool`. Required: `false`.
+
+Back up the previous /etc/cockpit/cockpit.conf before replacing a changed
+configuration.
+
+Default:
+
+```yaml
+cockpit_backup: true
+```
+
 ### `cockpit_config`
 
 Type: `dict`. Required: `false`.
 
-Authoritative cockpit.conf sections mapping option names to string, boolean or
-numeric values.
+Authoritative cockpit.conf sections mapping option names to single-line strings,
+booleans or numbers.
+Option names start with a letter and may contain letters, digits, underscores,
+dots and hyphens. Strings must not contain CR, LF or NUL.
 Defaults disable remote-host login, multi-host sessions and unencrypted access,
 with at most ten concurrent login attempts.
 Password sessions expire after fifteen idle minutes; Kerberos SSO is unaffected.
@@ -243,7 +258,7 @@ Apply to hosts whose AD membership and account privileges are already configured
 ```yaml
 - name: Install Cockpit
   hosts: all
-  gather_facts: true
+  gather_facts: false
   roles:
     - role: jomrr.cockpit
 ```
@@ -255,7 +270,7 @@ Add storage management and a login title while retaining the defaults.
 ```yaml
 - name: Configure Cockpit
   hosts: all
-  gather_facts: true
+  gather_facts: false
   roles:
     - role: jomrr.cockpit
       cockpit_packages:

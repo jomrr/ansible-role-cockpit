@@ -1,0 +1,13 @@
+---
+# role: cockpit
+# file: vars/main.yml
+
+__cockpit_required_facts:
+  - os_family
+  - distribution
+  - distribution_release
+
+__cockpit_required_facts_subsets:
+  - '!all'
+  - '!min'
+  - distribution

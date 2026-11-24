@@ -15,6 +15,9 @@ cockpit_package_state: latest
 # Debian mirror providing the distribution's backports suite.
 cockpit_debian_backports_uri: https://deb.debian.org/debian
 
+# Back up cockpit.conf before replacing a changed configuration.
+cockpit_backup: true
+
 # Cockpit configuration for local HTTPS access and a fifteen-minute password idle timeout.
 cockpit_config:
   WebService:

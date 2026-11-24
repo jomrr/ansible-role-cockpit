@@ -4,8 +4,11 @@
 
 - name: COCKPIT | Exercise application selection, configuration updates and service recovery
   hosts: all
-  gather_facts: true
+  gather_facts: false
   tasks:
+    - name: COCKPIT | Clear cached facts before applying the role
+      ansible.builtin.meta: clear_facts
+
     - name: COCKPIT | Add an application and customize the login page
       ansible.builtin.include_role:
         name: "{{ lookup('ansible.builtin.env', 'MOLECULE_PROJECT_DIRECTORY') }}"
@@ -45,6 +48,33 @@
       ansible.builtin.assert:
         that: "'cockpit-storaged' in ansible_facts.packages"
         quiet: true
+
+    - name: COCKPIT | Exercise invalid configuration options
+      block:
+        - name: COCKPIT | Apply multiline and nested option values
+          ansible.builtin.include_role:
+            name: "{{ lookup('ansible.builtin.env', 'MOLECULE_PROJECT_DIRECTORY') }}"
+          vars:
+            cockpit_config:
+              WebService:
+                LoginTitle: |-
+                  Molecule
+                  Cockpit
+                Origins: [https://example.org]
+
+        - name: COCKPIT | Fail if invalid options were accepted
+          ansible.builtin.fail:
+            msg: Cockpit accepted invalid configuration.
+
+      rescue:
+        - name: COCKPIT | Verify rejection of both invalid options
+          ansible.builtin.assert:
+            that:
+              - >-
+                ansible_failed_result.results | map(attribute='msg') | sort ==
+                ['Invalid cockpit.conf option name or value for LoginTitle.',
+                 'Invalid cockpit.conf option name or value for Origins.']
+            quiet: true
 
     - name: COCKPIT | Stop the web service
       become: true

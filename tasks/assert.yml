@@ -2,7 +2,7 @@
 # role: cockpit
 # file: tasks/assert.yml
 
-- name: COCKPIT | Validate supported platforms and web service package
+- name: assert | Validate supported platforms and web service package
   ansible.builtin.assert:
     that:
       - ansible_facts.os_family in ['Debian', 'RedHat', 'Suse']
@@ -10,10 +10,11 @@
     fail_msg: Cockpit requires a Debian, RedHat or Suse OS family and cockpit-ws in cockpit_packages.
     quiet: true
 
-- name: COCKPIT | Validate configuration sections
+- name: assert | Validate configuration sections
   ansible.builtin.assert:
     that:
-      - __cockpit_section.key is match('^[A-Za-z][A-Za-z0-9_-]*$')
+      - __cockpit_section.key is string
+      - __cockpit_section.key is match('^[A-Za-z][A-Za-z0-9_-]*\Z')
       - __cockpit_section.value is mapping
     fail_msg: Cockpit configuration requires named sections containing option mappings.
     quiet: true
@@ -21,3 +22,17 @@
   loop_control:
     loop_var: __cockpit_section
     label: "{{ __cockpit_section.key }}"
+
+- name: assert | Validate configuration options
+  ansible.builtin.assert:
+    that:
+      - __cockpit_option.key is string
+      - __cockpit_option.key is match('^[A-Za-z][A-Za-z0-9_.-]*\Z')
+      - __cockpit_option.value is number or __cockpit_option.value is string
+      - __cockpit_option.value is not string or __cockpit_option.value is not search('[\r\n\x00]')
+    fail_msg: "Invalid cockpit.conf option name or value for {{ __cockpit_option.key }}."
+    quiet: true
+  loop: "{{ cockpit_config.values() | map('dict2items') | flatten }}"
+  loop_control:
+    loop_var: __cockpit_option
+    label: "{{ __cockpit_option.key }}"

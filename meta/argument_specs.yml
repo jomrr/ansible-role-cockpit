@@ -34,6 +34,11 @@ argument_specs:
         default: https://deb.debian.org/debian
         description: Debian mirror supplying the distribution codename's backports suite,
           verified with the Debian archive keyring.
+      cockpit_backup:
+        type: bool
+        default: true
+        description: Back up the previous /etc/cockpit/cockpit.conf before replacing a changed
+          configuration.
       cockpit_config:
         type: dict
         default:
@@ -46,8 +51,10 @@ argument_specs:
             IdleTimeout: 15
             WarnBeforeConnecting: true
         description:
-          - Authoritative cockpit.conf sections mapping option names to string, boolean
-            or numeric values.
+          - Authoritative cockpit.conf sections mapping option names to single-line strings,
+            booleans or numbers.
+          - Option names start with a letter and may contain letters, digits, underscores,
+            dots and hyphens. Strings must not contain CR, LF or NUL.
           - Defaults disable remote-host login, multi-host sessions and unencrypted access,
             with at most ten concurrent login attempts.
           - Password sessions expire after fifteen idle minutes; Kerberos SSO is unaffected.

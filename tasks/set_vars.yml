@@ -1,0 +1,8 @@
+---
+# role: cockpit
+# file: tasks/set_vars.yml
+
+- name: set_vars | Gather required distribution facts
+  ansible.builtin.setup:
+    gather_subset: "{{ __cockpit_required_facts_subsets }}"
+  when: __cockpit_required_facts | difference(ansible_facts.keys()) | length > 0

@@ -2,10 +2,13 @@
 # role: cockpit
 # file: tasks/main.yml
 
-- name: COCKPIT | Validate role configuration
+- name: Gather platform settings
+  ansible.builtin.import_tasks: set_vars.yml
+
+- name: Validate role configuration
   ansible.builtin.import_tasks: assert.yml
 
-- name: COCKPIT | Enable Debian backports
+- name: Enable Debian backports
   become: true
   become_user: root
   ansible.builtin.deb822_repository:
@@ -22,7 +25,7 @@
   register: __cockpit_backports
   when: ansible_facts.distribution == 'Debian'
 
-- name: COCKPIT | Refresh APT package metadata
+- name: Refresh APT package metadata
   become: true
   become_user: root
   ansible.builtin.apt:
@@ -30,7 +33,7 @@
     cache_valid_time: "{{ (__cockpit_backports is changed) | ternary(0, 3600) }}"
   when: ansible_facts.os_family == 'Debian'
 
-- name: COCKPIT | Install packages with APT backports enabled
+- name: Install packages with APT backports enabled
   become: true
   become_user: root
   ansible.builtin.apt:
@@ -41,7 +44,7 @@
   when: ansible_facts.os_family == 'Debian'
   notify: restart cockpit
 
-- name: COCKPIT | Install packages with DNF
+- name: Install packages with DNF
   become: true
   become_user: root
   ansible.builtin.dnf:
@@ -51,7 +54,7 @@
   when: ansible_facts.os_family == 'RedHat'
   notify: restart cockpit
 
-- name: COCKPIT | Install packages with Zypper
+- name: Install packages with Zypper
   become: true
   become_user: root
   community.general.zypper:
@@ -62,7 +65,7 @@
   when: ansible_facts.os_family == 'Suse'
   notify: restart cockpit
 
-- name: COCKPIT | Create configuration directory
+- name: Create configuration directory
   become: true
   become_user: root
   ansible.builtin.file:
@@ -72,18 +75,19 @@
     group: root
     mode: '0755'
 
-- name: COCKPIT | Configure the web service
+- name: Configure the web service
   become: true
   become_user: root
   ansible.builtin.template:
     src: cockpit.conf.j2
+    backup: "{{ cockpit_backup }}"
     dest: /etc/cockpit/cockpit.conf
     owner: root
     group: root
     mode: '0644'
   notify: restart cockpit
 
-- name: COCKPIT | Enable and start socket activation
+- name: Enable and start socket activation
   become: true
   become_user: root
   ansible.builtin.systemd_service:
@@ -91,5 +95,5 @@
     enabled: true
     state: started
 
-- name: COCKPIT | Apply web service changes
+- name: Apply web service changes
   ansible.builtin.meta: flush_handlers
